@@ -8,7 +8,6 @@
 
 ### Bugfixes
 - Fixed deprecated `vim.loop.fs_stat` -> `vim.uv.fs_stat` in lazy.lua
-- Fixed inconsistent hex format in `seul` palette (`#1b1b1bff` -> `#1b1b1b`)
 - Fixed selene config from `lua52` to `luajit`
 
 ### Configuration improvements
