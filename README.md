@@ -91,7 +91,6 @@ git clone https://github.com/xscriptor-colors/nvim ~/.config/nvim
   <li>helsinki</li>
   <li>berlin</li>
   <li>london</li>
-  <li>seul</li>
   <li>praha</li>
   <li>bogota</li>
 </ul>
