@@ -1,9 +1,8 @@
-[base]
-config = "selene"
-std = "luajit"
+std = "vim"
 
-[style]
-allow_unused_variable_prefixes = "_"
+[lints]
+mixed_table = "allow"
+unused_arguments = "allow"
 
-[lint]
-unused_arguments = "warn"
+[config]
+unused_variable = { ignore_pattern = "^_" }
