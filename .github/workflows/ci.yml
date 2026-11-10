@@ -6,30 +6,76 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        neovim: [v0.11.7, v0.12.6]
     steps:
       - uses: actions/checkout@v4
+
       - uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
-          version: v0.12.0
-      - name: Validate config loads without errors
-        run: nvim --headless -c "lua vim.cmd('q!')" -c "qa!"
+          version: ${{ matrix.neovim }}
+
+      - name: Use the repository config
+        run: |
+          mkdir -p "$HOME/.config"
+          ln -sfn "$GITHUB_WORKSPACE" "$HOME/.config/nvim"
+
+      - name: Check palettes and contrast
+        run: nvim --headless -u NONE --cmd "set rtp+=." -l scripts/check_colors.lua
+
+      - name: Load core config modules
+        run: |
+          nvim --headless -u NONE --cmd "set rtp+=." \
+            -c "lua for _, m in ipairs({ 'config.options', 'config.locale', 'config.keymaps', 'config.autocmds', 'config.theme' }) do require(m) end" \
+            -c "qa!"
+
       - name: Check Lua syntax
         run: |
-          for f in $(find lua colors -name '*.lua' -not -path '*/lazy-lock.json'); do
-            nvim --headless -c "lua local ok, err = loadfile('$f'); if not ok then io.stderr:write(err..'\n'); vim.cmd('cquit!') else vim.cmd('q!') end" 2>/dev/null || exit 1
+          for f in $(find lua colors scripts -name '*.lua' -not -path '*/lazy-lock.json'); do
+            nvim --headless -u NONE -c "lua local ok, err = loadfile('$f'); if not ok then io.stderr:write(err..'\n'); vim.cmd('cquit!') else vim.cmd('q!') end" 2>/dev/null || exit 1
           done
+
+      - name: Install plugins and validate startup
+        run: |
+          timeout 300 nvim --headless "+Lazy! sync" +qa
+          nvim --headless -c "lua vim.cmd('q!')" -c "qa!"
+
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Install stylua
         run: |
           curl -sL https://github.com/JohnnyMorganz/StyLua/releases/download/v2.5.2/stylua-linux-x86_64.zip -o stylua.zip
-          unzip -o stylua.zip && rm stylua.zip
-          chmod +x stylua && sudo mv stylua /usr/local/bin/
+          python3 -c "import zipfile; zipfile.ZipFile('stylua.zip').extractall('.')"
+          rm stylua.zip
+          chmod +x stylua
+          sudo mv stylua /usr/local/bin/
+
       - name: Check Lua formatting
-        run: stylua --check lua/
+        run: stylua --check lua/ colors/ scripts/
+
+      - name: Install selene
+        run: |
+          curl -sL https://github.com/Kampfkarren/selene/releases/download/0.32.0/selene-0.32.0-linux.zip -o selene.zip
+          python3 -c "import zipfile; zipfile.ZipFile('selene.zip').extractall('.')"
+          rm selene.zip
+          chmod +x selene
+
+      - name: Lint with selene
+        run: ./selene .

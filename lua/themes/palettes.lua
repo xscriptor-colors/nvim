@@ -7,7 +7,7 @@ local M = {
     color4 = "#fd9353",
     color5 = "#948ae3",
     color6 = "#5ad4e6",
-    color7 = "#bbbbbb", -- grey,
+    color7 = "#f7f1ff",
     color8 = "#0f0f0f",
     color9 = "#fc618d",
     color10 = "#7bd88f",
@@ -18,6 +18,7 @@ local M = {
     color15 = "#f7f1ff",
     background = "#050505",
     foreground = "#f7f1ff",
+    comment = "#bbbbbb",
   },
   madrid = {
     color0 = "#fafafa",
